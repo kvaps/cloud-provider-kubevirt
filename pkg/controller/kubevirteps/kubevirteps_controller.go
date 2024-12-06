@@ -532,11 +532,23 @@ func (c *Controller) finalize(service *v1.Service, slicesToCreate []*discovery.E
 		if len(slicesToCreate) == 0 {
 			break
 		}
-		if slicesToDelete[i].AddressType == slicesToCreate[0].AddressType && ownedBy(slicesToDelete[i], service) {
-			slicesToCreate[0].Name = slicesToDelete[i].Name
+
+		sd := slicesToDelete[i]
+		sc := slicesToCreate[0]
+
+		if sd.AddressType == sc.AddressType && ownedBy(sd, service) {
+			// Save the slice we want to update
+			sliceToUpdate := sc
+			// Rename it
+			sliceToUpdate.Name = sd.Name
+
+			// Remove it from slicesToCreate
 			slicesToCreate = slicesToCreate[1:]
-			slicesToUpdate = append(slicesToUpdate, slicesToCreate[0])
+			// Remove the sliceToDelete
 			slicesToDelete = append(slicesToDelete[:i], slicesToDelete[i+1:]...)
+
+			// Now safely add the updated slice to slicesToUpdate
+			slicesToUpdate = append(slicesToUpdate, sliceToUpdate)
 		} else {
 			i++
 		}
